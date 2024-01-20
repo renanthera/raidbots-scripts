@@ -5,6 +5,17 @@ from caseconverter import snakecase
 """
 Filters and converts data from https://www.raidbots.com/static/analysis/top/details.json
 into a format that is nearly parseable by simc.
+
+To make piping convenient, most messaging is on stderr.
+
+-S
+  Sorts entries based on comma-separated strings. Supports multiple invocations.
+-T
+  Returns the first k results for -Tk.
+-P
+  Filters printed keys based on comma-separated strings. Supports multiple invocations.
+-O
+  Prints simc-formatted gear to stdout.
 """
 
 reserved_prefixes = [
@@ -82,6 +93,19 @@ if top_arg:
 print(f'Printing {len(profiles)} profile{"s" if len(profiles) > 1 else ""}:',
       file=sys.stderr)
 
+def process_value(value):
+    if isinstance(value, list):
+        return '/'.join([str(v) for v in value])
+    return value
+def process_key(key):
+    key_map = {
+        'bonusLists': 'bonus_id',
+        'craftedStats': 'crafted_stats'
+    }
+    if key in key_map.keys():
+        return key_map[key]
+    return key
+
 for entry in profiles:
     print(f'ID: {entry.get("ID")}',
         file=sys.stdout if not simc_output_arg else sys.stderr)
@@ -90,35 +114,23 @@ for entry in profiles:
             print(f'  {key}: {value}',
                   file=sys.stdout if not simc_output_arg else sys.stderr)
     if simc_output_arg:
-        def process_value(value):
-            if isinstance(value, list):
-                return '/'.join([str(v) for v in value])
-            return value
-        def process_key(key):
-            key_map = {
-                'bonusLists': 'bonus_id',
-                'craftedStats': 'crafted_stats'
-            }
-            if key in key_map.keys():
-                return key_map[key]
-            return key
-        def process_name(name):
-            return snakecase(name)
         filter_keys = ['averageItemLevel', 'averageItemLevelEquipped', 'shirt', 'tabard']
         filter_item_params = ['name', 'context', 'quality', 'icon', 'itemLevel']
         reshape_gear = [
-            f'{slot_name}='+','.join([process_name(data.get('name', ''))] + [
-                f'{process_key(key)}={process_value(value)}'
-                for key, value in data.items()
-                if value and key not in filter_item_params
-            ])
+            f'{slot_name}='+','.join(
+                [snakecase(data.get('name', ''))] + [
+                    f'{process_key(key)}={process_value(value)}'
+                    for key, value in data.items()
+                    if value and key not in filter_item_params
+                ])
             for slot_name, data in entry.get('GEAR', {}).items()
             if slot_name not in filter_keys
         ]
-        print(f'# ID: {entry.get("ID")}')
+        print('  stdout:', file=sys.stderr)
+        print(f'# Start ID: {entry.get("ID")}')
         for key, value in entry.items():
             if key != 'ID' and key in print_args:
                 print(f'# {key}: {value}')
         for item in reshape_gear:
             print(item)
-        print('\n\n')
+        print(f'# End ID: {entry.get("ID")}\n')
