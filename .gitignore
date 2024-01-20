@@ -1,0 +1,10 @@
+[misc]
+*.simc
+*.tmp
+*.json
+
+[pyenv]
+bin
+lib
+lib64
+pyvenv.cfg
