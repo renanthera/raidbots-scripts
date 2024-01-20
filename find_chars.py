@@ -72,7 +72,7 @@ if top_arg:
 
 profiles = [
     {
-        key.upper() if hasattr(key, 'upper') else key: value.upper() if hasattr(value, 'upper') else value
+        key.upper() if hasattr(key, 'upper') else key: value
         for key, value in entry.items()
     }
     for entry in data.get('data')
@@ -131,6 +131,9 @@ for entry in profiles:
         for key, value in entry.items():
             if key != 'ID' and key in print_args:
                 print(f'# {key}: {value}')
+        print(f'{entry.get("CLASS", "").lower()}="{entry.get("ID")}"')
+        print(f'spec={entry.get("SPEC")}')
+        print(f'talents={entry.get("TALENTS")}')
         for item in reshape_gear:
             print(item)
         print(f'# End ID: {entry.get("ID")}\n')
