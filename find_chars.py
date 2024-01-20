@@ -2,6 +2,11 @@ import json, sys
 from re import sub
 from caseconverter import snakecase
 
+"""
+Filters and converts data from https://www.raidbots.com/static/analysis/top/details.json
+into a format that is nearly parseable by simc.
+"""
+
 reserved_prefixes = [
     '-S',
     '-T',
@@ -87,11 +92,12 @@ for entry in profiles:
     if simc_output_arg:
         def process_value(value):
             if isinstance(value, list):
-                return ','.join([str(v) for v in value])
+                return '/'.join([str(v) for v in value])
             return value
         def process_key(key):
             key_map = {
-                'bonusLists': 'bonus_id'
+                'bonusLists': 'bonus_id',
+                'craftedStats': 'crafted_stats'
             }
             if key in key_map.keys():
                 return key_map[key]
